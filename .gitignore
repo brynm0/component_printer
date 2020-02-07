@@ -5,3 +5,5 @@
 *.exe
 *.db
 .vs/component_printer/v15/.suo
+.vs/component_printer/v15/Browse.VC.db
+*.exe
