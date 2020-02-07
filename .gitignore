@@ -1,0 +1,7 @@
+
+*.pdb
+*.map
+*.obj
+*.exe
+*.db
+.vs/component_printer/v15/.suo
