@@ -40,13 +40,13 @@ flocal void write_entity_plaintext_func(len_string* builder,
             
     LOOP(i, array_names.size())
     {
-        sprintf(buf, "\t{\n\t%s val = state->%s[id];\n", array_types[i].str, array_names[i].str);
+        sprintf(buf, "\t{\n\t\t%s val = state->%s[id];\n", array_types[i].str, array_names[i].str);
         append_to_len_string(builder, buf);
                 
         if (streq("v2", array_types[i].str, 2))
         {
             append_to_len_string(builder, "\tchar buf[256];\n");
-            sprintf(buf, "\tsprintf(buf, \"   %s[id] == %%.2f %%.2f\\n\", val.x, val.y);\n",
+            sprintf(buf, "\tsprintf(buf, \" %s[id] == %%.2f %%.2f\\n\", val.x, val.y);\n",
                     array_names[i].str);
             append_to_len_string(builder, buf);
             sprintf(buf, "\tappend_to_len_string(&s, buf);\n");                    
@@ -55,7 +55,7 @@ flocal void write_entity_plaintext_func(len_string* builder,
         else if (streq("axis_bool_pair", array_types[i].str, 14))
         {
             append_to_len_string(builder, "\tchar buf[256];\n");
-            sprintf(buf, "\tsprintf(buf, \"   %s[id] == %%d %%d\\n\", val.x_axis, val.y_axis);\n",
+            sprintf(buf, "\tsprintf(buf, \" %s[id] == %%d %%d\\n\", val.x_axis, val.y_axis);\n",
                     array_names[i].str);
             append_to_len_string(builder, buf);
             sprintf(buf, "\tappend_to_len_string(&s, buf);\n");                    
@@ -64,7 +64,7 @@ flocal void write_entity_plaintext_func(len_string* builder,
         else if (streq("QuadData", array_types[i].str, 8))
         {
             append_to_len_string(builder, "\tchar buf[256];\n");
-            sprintf(buf, "\tsprintf(buf, \"   %s[id] == %%.2f %%.2f %%.2f %%.2f\\n\", val.topLeft.x, val.topLeft.y, val.bottomRight.x, val.bottomRight.y);\n",
+            sprintf(buf, "\tsprintf(buf, \" %s[id] == %%.2f %%.2f %%.2f %%.2f\\n\", val.topLeft.x, val.topLeft.y, val.bottomRight.x, val.bottomRight.y);\n",
                     array_names[i].str);
             append_to_len_string(builder, buf);
             sprintf(buf, "\tappend_to_len_string(&s, buf);\n");                    
@@ -73,7 +73,7 @@ flocal void write_entity_plaintext_func(len_string* builder,
         else if (streq("v3", array_types[i].str, 2))
         {
             append_to_len_string(builder, "\tchar buf[256];\n");
-            sprintf(buf, "\tsprintf(buf, \"   %s[id] == %%.2f %%.2f %%.2f\\n\", val.x, val.y, val.z);\n",
+            sprintf(buf, "\tsprintf(buf, \" %s[id] == %%.2f %%.2f %%.2f\\n\", val.x, val.y, val.z);\n",
                     array_names[i].str);
             append_to_len_string(builder, buf);
             sprintf(buf, "\tappend_to_len_string(&s, buf);\n");                    
@@ -83,7 +83,7 @@ flocal void write_entity_plaintext_func(len_string* builder,
         {
                  
             append_to_len_string(builder, "\tchar buf[256];\n");
-            sprintf(buf, "\tsprintf(buf, \"   %s[id] == %%.2f %%.2f %%.2f %%.2f\\n\", val.x, val.y, val.z, val.w);\n",
+            sprintf(buf, "\tsprintf(buf, \" %s[id] == %%.2f %%.2f %%.2f %%.2f\\n\", val.x, val.y, val.z, val.w);\n",
                     array_names[i].str);
             append_to_len_string(builder, buf);
             sprintf(buf, "\tappend_to_len_string(&s, buf);\n");                    
@@ -92,16 +92,96 @@ flocal void write_entity_plaintext_func(len_string* builder,
         else if (streq("r32", array_types[i].str, 3))
         {
             append_to_len_string(builder, "\tchar buf[256];\n");
-            sprintf(buf, "\tsprintf(buf, \"   %s[id] == %%.2f\\n\", val);\n",
+            sprintf(buf, "\tsprintf(buf, \" %s[id] == %%.2f\\n\", val);\n",
                     array_names[i].str);
             append_to_len_string(builder, buf);
             sprintf(buf, "\tappend_to_len_string(&s, buf);\n");                    
             append_to_len_string(builder, buf);   
         }
+        else if (streq("render_mesh_ids", array_types[i].str, strlen("render_mesh_ids")))
+        {
+            append_to_len_string(builder, "\t\tchar buf[256];\n");
+
+            sprintf(buf, "\t\tsprintf(buf, \" %s[id] == \\n\");\n",
+                    array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\tappend_to_len_string(&s, buf);\n");
+            append_to_len_string(builder, buf);
+
+            sprintf(buf, "\t\tLOOP(i, state->entity_mesh_draw_counts[id])\n\t\t{\n");
+            append_to_len_string(builder, buf);
+
+            
+            append_to_len_string(builder, "\t\t\tstd::string name;\n");
+            append_to_len_string(builder, "\t\t\tfor (auto it = model_names.begin(); it != model_names.end(); ++it)\n\t\t\t{\n");
+            append_to_len_string(builder, "\t\t\t\t if (it->second == val.ids[i]) { name = it->first; break; }\n\t\t\t}\n");
+            sprintf(buf, "\t\t\tsprintf(buf, \"  %s.ids[%%d] == %%s\\n\", i, name.c_str());\n", array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\t\tappend_to_len_string(&s, buf);\n");
+            append_to_len_string(builder, buf);
+            sprintf(buf, "\t\t}\n",
+                    array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+        }
+        
+        else if (streq("render_mesh_scales", array_types[i].str, strlen("render_mesh_scales")))
+        {
+
+            append_to_len_string(builder, "\t\tchar buf[256];\n");
+            
+
+            sprintf(buf, "\t\tsprintf(buf, \" %s[id] == \\n\");\n",
+                    array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\tappend_to_len_string(&s, buf);\n");
+            append_to_len_string(builder, buf);
+
+            sprintf(buf, "\t\tLOOP(i, state->entity_mesh_draw_counts[id])\n\t\t{\n");
+            append_to_len_string(builder, buf);
+
+            sprintf(buf, "\t\t\tsprintf(buf, \"  %s.ids[%%d] == %%.2f %%.2f\\n\", i, val.scales[i].x, val.scales[i].y);\n", array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\t\tappend_to_len_string(&s, buf);\n");
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\t}\n",
+                    array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+        }
+        else if (streq("render_mesh_positions", array_types[i].str, strlen("render_mesh_positions")))
+        {
+            append_to_len_string(builder, "\t\tchar buf[256];\n");
+
+            sprintf(buf, "\t\tsprintf(buf, \" %s[id] == \\n\");\n",
+                    array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\tappend_to_len_string(&s, buf);\n");
+            append_to_len_string(builder, buf);
+
+            sprintf(buf, "\t\tLOOP(i, state->entity_mesh_draw_counts[id])\n\t\t{\n");
+            append_to_len_string(builder, buf);
+
+            sprintf(buf, "\t\t\tsprintf(buf, \"  %s.positions[%%d] == %%.2f %%.2f\\n\", i, val.positions[i].x, val.positions[i].y);\n", array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\t\tappend_to_len_string(&s, buf);\n");
+            append_to_len_string(builder, buf);
+            
+            sprintf(buf, "\t\t}\n",
+                    array_names[i].str);
+            append_to_len_string(builder, buf);
+        }
         else
         {
             append_to_len_string(builder, "\tchar buf[256];\n");
-            sprintf(buf, "\tsprintf(buf, \"   %s[id] == %%d\\n\", val);\n",
+            sprintf(buf, "\tsprintf(buf, \" %s[id] == %%d\\n\", val);\n",
                     array_names[i].str);
             append_to_len_string(builder, buf);
             sprintf(buf, "\tappend_to_len_string(&s, buf);\n");                    
@@ -140,52 +220,52 @@ flocal void write_entity_json_func(len_string* builder,
         
         if (streq("v2", array_types[i].str, 2))
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
             
-            append_to_len_string(builder, "\t\t obj_js[\"value\"] = {val.x, val.y};\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"v2\";\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"] = {val.x, val.y};\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"v2\";\n");
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;", array_names[i].str);
             append_to_len_string(builder, buf);
         }
         else if (streq("v3", array_types[i].str, 2))
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"value\"] = {val.x, val.y, val.z};\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"v3\";\n;");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"] = {val.x, val.y, val.z};\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"v3\";\n;");
             
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;", array_names[i].str);
             append_to_len_string(builder, buf);
         }
         else if (streq("v4", array_types[i].str, 2))
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"value\"] = {val.x, val.y, val.z, val.w};\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"v4\";\n");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"] = {val.x, val.y, val.z, val.w};\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"v4\";\n");
             
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;", array_names[i].str);
             append_to_len_string(builder, buf);
         }
         else if (streq("r32", array_types[i].str, 3))
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"value\"] = val;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"r32\";\n");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"] = val;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"r32\";\n");
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;", array_names[i].str);
             append_to_len_string(builder, buf);
         }
         else if (streq("b32", array_types[i].str, 3))
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"value\"] = val;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"b32\";\n");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"] = val;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"b32\";\n");
             
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;", array_names[i].str);
             append_to_len_string(builder, buf);
         }
         else if (streq("axis_bool_pair", array_types[i].str, 14))
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"axis_bool_pair\";\n");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"axis_bool_pair\";\n");
             
             sprintf(buf, "\t\tjson abp_j;\n");
             append_to_len_string(builder, buf);
@@ -193,14 +273,14 @@ flocal void write_entity_json_func(len_string* builder,
             append_to_len_string(builder, buf);
             sprintf(buf, "\t\tabp_j[\"y_axis\"] = val.y_axis;\n");
             append_to_len_string(builder, buf);
-            append_to_len_string(builder, "\t\t obj_js[\"value\"] = abp_j;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"] = abp_j;\n");
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;\n",array_names[i].str);
             append_to_len_string(builder, buf);
         }
         else if (streq("QuadData", array_types[i].str, 8))
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"QuadData\";\n");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"QuadData\";\n");
 
             sprintf(buf, "\t\tjson qd_j;\n");
             append_to_len_string(builder, buf);
@@ -208,16 +288,79 @@ flocal void write_entity_json_func(len_string* builder,
             append_to_len_string(builder, buf);
             sprintf(buf, "\t\tqd_j[\"bottomRight\"] = { val.bottomRight.x, val.bottomRight.y };\n");
             append_to_len_string(builder, buf);
-            append_to_len_string(builder, "\t\t obj_js[\"value\"]  = \"qd_j\";\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"]  = \"qd_j\";\n");
             
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;\n",array_names[i].str);
             append_to_len_string(builder, buf);
         }
+        else if (streq("render_mesh_ids", array_types[i].str, strlen("render_mesh_ids")))
+        {
+
+            append_to_len_string(builder, "\t\tstd::vector<json> array;\n");
+            append_to_len_string(builder, "\t\tLOOP(i, MAX_MESHES_PER_ENTITY)\n\t\t{\n");
+            
+            append_to_len_string(builder, "\t\t\tstd::string name;\n");
+            append_to_len_string(builder, "\t\t\tfor (auto it = model_names.begin(); it != model_names.end(); ++it)\n\t\t\t{\n");
+            append_to_len_string(builder, "\t\t\t\t if (it->second == val.ids[i]) { name = it->first; break; }\n\t\t\t}\n");
+            
+            append_to_len_string(builder, "\t\t\tjson id_js;\n");
+            append_to_len_string(builder, "\t\t\tid_js[\"type\"] = \"string\";\n");
+            append_to_len_string(builder, "\t\t\tid_js[\"value\"] = name;\n");
+            
+            append_to_len_string(builder, "\t\t\tarray.push_back(id_js);\n");
+            
+            append_to_len_string(builder, "\t\t}\n");
+
+            sprintf(buf, "\t\tj[\"%s\"][\"value\"] = array;\n",array_names[i].str);
+            append_to_len_string(builder, buf);
+            sprintf(buf, "\t\tj[\"%s\"][\"type\"] = \"render_mesh_ids\";\n",array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+        }
+        
+        else if (streq("render_mesh_scales", array_types[i].str, strlen("render_mesh_scales")))
+        {
+            append_to_len_string(builder, "\t\tstd::vector<json> array;\n");
+            append_to_len_string(builder, "\t\tLOOP(i, MAX_MESHES_PER_ENTITY)\n\t\t{\n");
+                        
+            append_to_len_string(builder, "\t\t\tjson id_js;\n");
+            append_to_len_string(builder, "\t\t\tid_js[\"type\"] = \"v2\";\n");
+            append_to_len_string(builder, "\t\t\tid_js[\"value\"] = { val.scales[i].x, val.scales[i].y };\n");
+            
+            append_to_len_string(builder, "\t\t\tarray.push_back(id_js);\n");
+            
+            append_to_len_string(builder, "\t\t}\n");
+
+
+            sprintf(buf, "\t\tj[\"%s\"][\"value\"] = array;\n",array_names[i].str);
+            append_to_len_string(builder, buf);
+            sprintf(buf, "\t\tj[\"%s\"][\"type\"] = \"render_mesh_scales\";\n",array_names[i].str);
+            append_to_len_string(builder, buf);
+            
+        }
+        else if (streq("render_mesh_positions", array_types[i].str, strlen("render_mesh_positions")))
+        {
+            append_to_len_string(builder, "\t\tstd::vector<json> array;\n");
+            append_to_len_string(builder, "\t\tLOOP(i, MAX_MESHES_PER_ENTITY)\n\t\t{\n");
+                        
+            append_to_len_string(builder, "\t\t\tjson id_js;\n");
+            append_to_len_string(builder, "\t\t\tid_js[\"type\"] = \"v2\";\n");
+            append_to_len_string(builder, "\t\t\tid_js[\"value\"] = { val.positions[i].x, val.positions[i].y };\n");
+            
+            append_to_len_string(builder, "\t\t\tarray.push_back(id_js);\n");
+            
+            append_to_len_string(builder, "\t\t}\n");
+
+            sprintf(buf, "\t\tj[\"%s\"][\"value\"] = array;\n",array_names[i].str);
+            append_to_len_string(builder, buf);
+            sprintf(buf, "\t\tj[\"%s\"][\"type\"] = \"render_mesh_positions\";\n",array_names[i].str);
+            append_to_len_string(builder, buf);
+        }
         else // default
         {
-            append_to_len_string(builder, "\t\t json obj_js;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"value\"] = (u32)val;\n");
-            append_to_len_string(builder, "\t\t obj_js[\"type\"]  = \"default\";\n");
+            append_to_len_string(builder, "\t\tjson obj_js;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"value\"] = (u32)val;\n");
+            append_to_len_string(builder, "\t\tobj_js[\"type\"]  = \"default\";\n");
             
             sprintf(buf, "\t\tj[\"%s\"] = obj_js;", array_names[i].str);
             append_to_len_string(builder, buf);            
@@ -241,9 +384,9 @@ int main (int argc, char** argv)
     }
     u64 length = 0;
     char* full_file_str = read_entire_file_text(argv[1], &length);
-#define RCW "REGISTER_COMPONENT_WIDGET"
-#define RWV "REGISTER_WIDGET_VAL"
-#define RWEE "REGISTER_WIDGET_ENUM_ENTRY"
+#define RCW "REGISTER_COMPONENT_SERIALIZE"
+#define RWV "REGISTER_COMPONENT_VAL"
+#define RWEE "REGISTER_COMPONENT_ENUM_ENTRY"
     len_string builder = l_string(1);
     
     Token rwv =  token(TOKEN_IDENTIFIER, strlen(RWV), RWV);
@@ -328,15 +471,14 @@ int main (int argc, char** argv)
             }
             if (t == rwee)
             {
-                t = getToken(&tok);
-                t = getToken(&tok);
-                if (t == state &&
-                    getToken(&tok) == token(TOKEN_POINTER_ACCESS, 2, "->"))
+                
+                find_next_token(&tok, state);
+                if (getToken(&tok) == token(TOKEN_POINTER_ACCESS, 2, "->"))
                 {
                     Token arr = getToken(&tok);
                     if (arr == entities)
                     {
-                        find_next_token_in_file(&tok.at, token(TOKEN_OR_ASSIGNMENT, 2, "|="));
+                        find_next_token(&tok, token(TOKEN_OR_ASSIGNMENT, 2, "|="));
                         Token enum_id = getToken(&tok);
                         enum_name = l_string(enum_id.text, enum_id.length);
                         //printf("%s\n",enum_name.str);
@@ -346,14 +488,47 @@ int main (int argc, char** argv)
             }
             else if (t == rwv)
             {
-                t = getToken(&tok);
-                t = getToken(&tok);
-                if (t == state &&
-                    getToken(&tok) == token(TOKEN_POINTER_ACCESS, 2, "->"))
+                i32 ctr = 0;
+                while(true)
+                {
+                    t = getToken(&tok);
+                    if (t.type == TOKEN_PAREN_OPEN)
+                    {
+                        ctr--;
+                    }
+                    else if (t.type == TOKEN_PAREN_CLOSE)
+                    {
+                        ctr++;
+                    }
+                    else if (t == state)
+                    {
+                        break;
+                    }
+                }
+                if (getToken(&tok) == token(TOKEN_POINTER_ACCESS, 2, "->"))
                 {
                     Token arr = getToken(&tok);
-                    find_next_token(&tok, token(TOKEN_COMMA, 1, ","));
-                    Token type = getToken(&tok);
+                    Token before;
+                    Token curr;
+                    while(ctr != 0)
+                    {
+                        curr = getToken(&tok);
+                        if (curr.type == TOKEN_PAREN_OPEN)
+                        {
+                            ctr--;
+                        }
+                        else if (curr.type == TOKEN_PAREN_CLOSE)
+                        {
+                            ctr++;
+                        }
+                        else if (curr.type == TOKEN_IDENTIFIER)
+                        {
+                            before = curr;
+                        }
+                    }
+                    //find_next_token(&tok, token(TOKEN_COMMA, 1, ","));
+
+                    Token type = before;
                     len_string arr_str = l_string(arr.text, arr.length);
                     len_string type_str = l_string(type.text, type.length);
                     array_names.push_back(arr_str);
